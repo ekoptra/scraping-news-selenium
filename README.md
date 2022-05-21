@@ -2,7 +2,7 @@
 
 Kode untuk melakukan scraping pada website `detik`, `republika`, dan `kompas`. Untuk setiap website perlu dikumpulkan link artikelnya terlebih dahulu. Untuk `detik` sudah disertai dengan scraping link berita berdasarkan keyword tertentu. Tetapi untuk `republika` dan `kompas` belum bisa dilakukan karena hasil pencarian keyword untuk website tersebut dilakukan oleh [Programmable Search Engine - Google](https://programmablesearchengine.google.com/about/) dan sulit untuk membuat scrapernya
 
-Scraping dilakukan menggunakan [Selenium](https://www.selenium.dev/) sehingga perlu dilakukan configurasi terlebih dahulu yaitu install library `pip install selenium`, kemudian download [webdriver Chrome](https://chromedriver.chromium.org/downloads) dan atur `PATH` dari webdriver.
+Scraping dilakukan menggunakan [Selenium](https://www.selenium.dev/) sehingga perlu dilakukan configurasi terlebih dahulu yaitu install library `pip install selenium`, kemudian download [webdriver Chrome](https://chromedriver.chromium.org/downloads) yang versinya sesuai dengan Google Chrome yang digunakan dan atur `PATH` dari webdrivernya.
 
 Hasil scraping akan disimpan format `json` sebagai berikut
 
@@ -74,7 +74,7 @@ class Scraping():
                 
     def get_p_elements(self):
         """Mencari semua tag <p> yang merupakan bagian dari artikel"""
-        return self.driver.find_elements_by_css_selector(f".{self.container_article} p")
+        return self.driver.find_elements(by=By.CSS_SELECTOR, value=f".{self.container_article} p")
     
     
     def _init_paragraph(self):
@@ -159,14 +159,14 @@ class ScrapingRepublika(Scraping):
     
     def get_info_article(self):
         """Ambil informasi waktu publish dan judul"""
-        published_date = self.driver.find_element_by_css_selector('.wrap_detail_set .date_detail p').text
-        title = self.driver.find_element_by_css_selector('.wrap_detail_set h1').text
+        published_date = self.driver.find_element(by=By.CSS_SELECTOR, value='.wrap_detail_set .date_detail p').text
+        title = self.driver.find_element(by=By.CSS_SELECTOR, value='.wrap_detail_set h1').text
         return published_date, title
     
     def has_pagination(self, link):
         """Ada beberapa artikel yang terpecah menjadi beberapa halaman"""
         try:
-            self.driver.find_element_by_class_name("pagination")
+            self.driver.find_element(by=By.CLASS_NAME, value="pagination")
             part = 1
             while True:
                 self.get(f"{link}-part{part}")
@@ -197,8 +197,8 @@ class ScrapingKompas(Scraping):
     
     def get_info_article(self):
         """Ambil informasi waktu publish dan judul"""
-        published_date = self.driver.find_element_by_css_selector('.read__time').text.replace("Kompas.com - ", "")
-        title = self.driver.find_element_by_css_selector('.read__title').text
+        published_date = self.driver.find_element(by=By.CSS_SELECTOR, value='.read__time').text.replace("Kompas.com - ", "")
+        title = self.driver.find_element(by=By.CSS_SELECTOR, value='.read__title').text
         return published_date, title
     
         
@@ -227,28 +227,28 @@ class ScrapingDetik(Scraping):
                     
     def get_info_article(self):
         """Ambil informasi waktu publish dan judul"""
-        published_date = self.driver.find_element_by_css_selector('.detail__date').text
-        title = self.driver.find_element_by_css_selector('h1.detail__title').text
+        published_date = self.driver.find_element(by=By.CSS_SELECTOR, value='.detail__date').text
+        title = self.driver.find_element(by=By.CSS_SELECTOR, value='h1.detail__title').text
         return published_date, title
     
     def get_p_elements(self):
         """Mencari semua tag <p> dan div yang merupakan bagian dari artikel"""
-        p = self.driver.find_elements_by_css_selector(f".{self.container_article} p")
-        p += self.driver.find_elements_by_css_selector(f'.{self.container_article} div[style="text-align: left;"]')
+        p = self.driver.find_elements(by=By.CSS_SELECTOR, value=f".{self.container_article} p")
+        p += self.driver.find_elements(by=By.CSS_SELECTOR, value=f'.{self.container_article} div[style="text-align: left;"]')
         return p
     
     def scraping_title(self):
         self.driver = webdriver.Chrome()
         self.driver.get(self.website)
-        self.driver.find_element_by_css_selector('input[placeholder="Cari Berita"]').send_keys(self.keyword, Keys.ENTER)
+        self.driver.find_element(by=By.CSS_SELECTOR, value='input[placeholder="Cari Berita"]').send_keys(self.keyword, Keys.ENTER)
 
         link_detik = []
         while True:
-            a_elements = self.driver.find_elements_by_css_selector(".list-berita article a")
+            a_elements = self.driver.find_elements(by=By.CSS_SELECTOR, value=".list-berita article a")
             for a in a_elements:
                 link_detik.append(a.get_attribute("href") + "?single=1")
                 
-            button = self.driver.find_elements_by_css_selector('.paging.text_center a')[-1]
+            button = self.driver.find_elements(by=By.CSS_SELECTOR, value='.paging.text_center a')[-1]
             if button.get_attribute("href") != self.driver.current_url: button.click()
             else: break
                 
@@ -261,8 +261,8 @@ class ScrapingDetik(Scraping):
         Overriding method karena perlu lakukan scraping title terlebih dahulu
         """
         self.scraping_start = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-        list_link = self.scraping_title()
-        self._scraping(list_link, verbose, time_out)
+        self.list_link = self.scraping_title()
+        self._scraping(self.list_link, verbose, time_out)
         self.scraping_end = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
 ```
 
